@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
@@ -42,16 +42,49 @@ async function run() {
     });
 
     //My Car Listing API
-        app.get("/car-listing/:userId", async (req, res) => {
-          const { userId } = req.params;
-          console.log("userId:", userId);
+    app.get("/car-listing/:userId", async (req, res) => {
+      const { userId } = req.params;
+      console.log("userId:", userId);
 
-          const result = await carsCollection
-            .find({ "userId": userId })
-            .toArray();
+      const result = await carsCollection.find({ userId: userId }).toArray();
 
-          res.send(result);
-        });
+      res.send(result);
+    });
+
+    //Delete Car listing API
+    app.delete("/car-listing/:id", async (req, res) => {
+      const id = req.params.id;
+      const _id = new ObjectId(id);
+
+      const result = await carsCollection.deleteOne({ _id });
+
+      res.json(result);
+    });
+
+    //Edit Car listing API
+
+    app.patch("/car-listing/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("PATCH id:", id);
+      console.log("is valid ObjectId:", ObjectId.isValid(id));
+      console.log("body:", req.body);
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid car id", id });
+      }
+
+      const _id = new ObjectId(id);
+
+      const foundCar = await carsCollection.findOne({ _id });
+      console.log("foundCar:", foundCar);
+
+      const result = await carsCollection.updateOne(
+        { _id },
+        { $set: req.body },
+      );
+
+      res.json(result);
+    });
 
     // Send a ping to confirm a successful connection - this part is optional can be remved before deployment
     await client.db("admin").command({ ping: 1 });
