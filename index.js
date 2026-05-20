@@ -86,6 +86,16 @@ async function run() {
       res.json(result);
     });
 
+    //All Car Listing API
+    app.get("/car-listing", async (req, res) => {
+      const { userId } = req.params;
+      console.log("userId:", userId);
+
+      const result = await carsCollection.find().toArray();
+
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection - this part is optional can be remved before deployment
     await client.db("admin").command({ ping: 1 });
     console.log(
