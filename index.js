@@ -95,6 +95,25 @@ async function run() {
 
       res.send(result);
     });
+    //Individual car list API
+    app.get("/car-listing/details/:id", async (req, res) => {
+      const { id } = req.params;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid car id", id });
+      }
+
+      const _id = new ObjectId(id);
+      console.log("Id:", _id);
+
+      const result = await carsCollection.findOne({ _id });
+
+      if (!result) {
+        return res.status(404).json({ message: "Car not found", id });
+      }
+
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection - this part is optional can be remved before deployment
     await client.db("admin").command({ ping: 1 });
