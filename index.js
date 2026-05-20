@@ -29,13 +29,29 @@ async function run() {
     const db = client.db("rentivodb");
     const usersCollection = db.collection("users");
 
-    //register API
-    app.post("/destination", async (req, res) => {
+    //Add Car API
+
+    const carsCollection = db.collection("cars");
+
+    app.post("/add-new-car", async (req, res) => {
       const data = req.body;
-      const result = await usersCollection.insertOne(data);
+      console.log(data);
+      const result = await carsCollection.insertOne(data);
 
       res.json(result);
     });
+
+    //My Car Listing API
+        app.get("/car-listing/:userId", async (req, res) => {
+          const { userId } = req.params;
+          console.log("userId:", userId);
+
+          const result = await carsCollection
+            .find({ "userId": userId })
+            .toArray();
+
+          res.send(result);
+        });
 
     // Send a ping to confirm a successful connection - this part is optional can be remved before deployment
     await client.db("admin").command({ ping: 1 });
