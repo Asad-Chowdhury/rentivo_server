@@ -15,5 +15,13 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongodb": "^7.2.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Asad-Chowdhury/rentivo_server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Asad-Chowdhury/rentivo_server/issues"
+  },
+  "homepage": "https://github.com/Asad-Chowdhury/rentivo_server#readme"
 }
