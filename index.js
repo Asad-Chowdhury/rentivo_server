@@ -28,6 +28,7 @@ async function run() {
     //Create database:
     const db = client.db("rentivodb");
     const usersCollection = db.collection("users");
+    const bookingsCollection = db.collection("bookings");
 
     //Add Car API
 
@@ -95,7 +96,7 @@ async function run() {
 
       res.send(result);
     });
-    //Individual car list API
+    //Individual car details API
     app.get("/car-listing/details/:id", async (req, res) => {
       const { id } = req.params;
 
@@ -113,6 +114,49 @@ async function run() {
       }
 
       res.send(result);
+    });
+    //Booking API - Collecting booking data
+    app.post("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const booking = { ...req.body, userId };
+
+      const result = await bookingsCollection.insertOne(booking);
+
+      res.json(result);
+    });
+    //Booking API - extracting data for My booking page
+    app.get("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+
+      const result = await bookingsCollection.find({ userId }).toArray();
+
+      res.send(result);
+    });
+
+    //Booking API - Cancel Booking
+    app.delete("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const { _id } = req.body;
+
+      const result = await bookingsCollection.deleteOne({
+        _id: new ObjectId(_id),
+        userId,
+      });
+
+      res.json(result);
+    });
+
+    //Booking API - Update Status
+    app.patch("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const { _id } = req.body;
+
+      const result = await bookingsCollection.deleteOne({
+        _id: new ObjectId(_id),
+        userId,
+      });
+
+      res.json(result);
     });
 
     // Send a ping to confirm a successful connection - this part is optional can be remved before deployment
