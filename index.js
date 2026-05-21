@@ -124,7 +124,7 @@ async function run() {
       res.send(result);
     });
     //Individual car details API
-    app.get("/car-listing/details/:id", jwtTokenVerification, async (req, res) => {
+    app.get("/car-listing/details/:id", async (req, res) => {
       const { id } = req.params;
 
       if (!ObjectId.isValid(id)) {
@@ -148,6 +148,13 @@ async function run() {
       const booking = { ...req.body, userId };
 
       const result = await bookingsCollection.insertOne(booking);
+
+      if (booking.carId && ObjectId.isValid(booking.carId)) {
+        await carsCollection.updateOne(
+          { _id: new ObjectId(booking.carId) },
+          { $inc: { booking_count: 1 } },
+        );
+      }
 
       res.json(result);
     });
@@ -176,12 +183,15 @@ async function run() {
     //Booking API - Update Status
     app.patch("/booking/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
-      const { _id } = req.body;
+      const { _id, ...updatedData } = req.body;
 
-      const result = await bookingsCollection.deleteOne({
-        _id: new ObjectId(_id),
-        userId,
-      });
+      const result = await bookingsCollection.updateOne(
+        {
+          _id: new ObjectId(_id),
+          userId,
+        },
+        { $set: updatedData },
+      );
 
       res.json(result);
     });
