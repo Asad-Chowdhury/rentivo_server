@@ -33,30 +33,33 @@ const uri = process.env.MONGODB_URI;
 const authBaseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 
 //JWT Setup:
-    const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
+    // JWT Setup
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
-    const JWKS = createRemoteJWKSet(
-      new URL("/api/auth/jwks", authBaseURL),
-    );
+const CLIENT_URL = process.env.CLIENT_URL || process.env.BETTER_AUTH_URL;
+const JWKS = createRemoteJWKSet(new URL("/api/auth/jwks", CLIENT_URL));
 
-    const jwtTokenVerification = async (req, res, next) => {
-      const authHeader = req?.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      const token = authHeader.split(" ")[1];
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      //verify jwt token
-      try {
-        const { payload } = await jwtVerify(token, JWKS);
-        console.log(payload);
-        next();
-      } catch (error) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-    };
+const jwtTokenVerification = async (req, res, next) => {
+  try {
+    const header = req.headers.authorization;
+
+    if (!header?.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Missing auth token" });
+    }
+
+    const token = header.slice("Bearer ".length);
+
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: CLIENT_URL,
+      audience: CLIENT_URL,
+    });
+
+    req.user = payload;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid auth token" });
+  }
+};
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
