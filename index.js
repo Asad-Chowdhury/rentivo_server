@@ -115,7 +115,7 @@ async function run() {
     });
 
     //All Car Listing API
-    app.get("/car-listing", jwtTokenVerification, async (req, res) => {
+    app.get("/car-listing", async (req, res) => {
       const { userId } = req.params;
       console.log("userId:", userId);
 
