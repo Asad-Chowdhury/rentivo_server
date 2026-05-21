@@ -11,6 +11,33 @@ app.use(express.json());
 const port = process.env.PORT || 5001;
 const uri = process.env.MONGODB_URI;
 
+//JWT Setup:
+    const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
+
+    const JWKS = createRemoteJWKSet(
+      new URL("http://localhost:3000/api/auth/jwks"),
+    );
+
+    const jwtTokenVerification = async (req, res, next) => {
+      const authHeader = req?.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      //verify jwt token
+      try {
+        const { payload } = await jwtVerify(token, JWKS);
+        console.log(payload);
+        next();
+      } catch (error) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+    };
+
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -34,7 +61,7 @@ async function run() {
 
     const carsCollection = db.collection("cars");
 
-    app.post("/add-new-car", async (req, res) => {
+    app.post("/add-new-car", jwtTokenVerification, async (req, res) => {
       const data = req.body;
       console.log(data);
       const result = await carsCollection.insertOne(data);
@@ -43,7 +70,7 @@ async function run() {
     });
 
     //My Car Listing API
-    app.get("/car-listing/:userId", async (req, res) => {
+    app.get("/car-listing/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
       console.log("userId:", userId);
 
@@ -53,7 +80,7 @@ async function run() {
     });
 
     //Delete Car listing API
-    app.delete("/car-listing/:id", async (req, res) => {
+    app.delete("/car-listing/:id", jwtTokenVerification, async (req, res) => {
       const id = req.params.id;
       const _id = new ObjectId(id);
 
@@ -64,7 +91,7 @@ async function run() {
 
     //Edit Car listing API
 
-    app.patch("/car-listing/:id", async (req, res) => {
+    app.patch("/car-listing/:id", jwtTokenVerification, async (req, res) => {
       const id = req.params.id;
       console.log("PATCH id:", id);
       console.log("is valid ObjectId:", ObjectId.isValid(id));
@@ -88,7 +115,7 @@ async function run() {
     });
 
     //All Car Listing API
-    app.get("/car-listing", async (req, res) => {
+    app.get("/car-listing", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
       console.log("userId:", userId);
 
@@ -97,7 +124,7 @@ async function run() {
       res.send(result);
     });
     //Individual car details API
-    app.get("/car-listing/details/:id", async (req, res) => {
+    app.get("/car-listing/details/:id", jwtTokenVerification, async (req, res) => {
       const { id } = req.params;
 
       if (!ObjectId.isValid(id)) {
@@ -116,7 +143,7 @@ async function run() {
       res.send(result);
     });
     //Booking API - Collecting booking data
-    app.post("/booking/:userId", async (req, res) => {
+    app.post("/booking/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
       const booking = { ...req.body, userId };
 
@@ -125,7 +152,7 @@ async function run() {
       res.json(result);
     });
     //Booking API - extracting data for My booking page
-    app.get("/booking/:userId", async (req, res) => {
+    app.get("/booking/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
 
       const result = await bookingsCollection.find({ userId }).toArray();
@@ -134,7 +161,7 @@ async function run() {
     });
 
     //Booking API - Cancel Booking
-    app.delete("/booking/:userId", async (req, res) => {
+    app.delete("/booking/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
       const { _id } = req.body;
 
@@ -147,7 +174,7 @@ async function run() {
     });
 
     //Booking API - Update Status
-    app.patch("/booking/:userId", async (req, res) => {
+    app.patch("/booking/:userId", jwtTokenVerification, async (req, res) => {
       const { userId } = req.params;
       const { _id } = req.body;
 
