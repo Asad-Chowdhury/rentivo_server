@@ -5,7 +5,27 @@ const cors = require("cors");
 
 dotenv.config();
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3000", // Your local dev server (Vite/Next)
+  "https://rentivo-client.vercel.app", // Your production Vercel frontend
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 const port = process.env.PORT || 5001;
@@ -116,8 +136,7 @@ async function run() {
     });
 
     //All Car Listing API
-    app.get("/car-listing", async (req, res) => {
-      const { search, type } = req.query;
+    app.get("/car-listing", async (req, res) => { const { search, type } = req.query;
       const query = {};
 
       if (search) {
