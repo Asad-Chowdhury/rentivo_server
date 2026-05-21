@@ -10,12 +10,13 @@ app.use(express.json());
 
 const port = process.env.PORT || 5001;
 const uri = process.env.MONGODB_URI;
+const authBaseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 
 //JWT Setup:
     const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
     const JWKS = createRemoteJWKSet(
-      new URL("http://localhost:3000/api/auth/jwks"),
+      new URL("/api/auth/jwks", authBaseURL),
     );
 
     const jwtTokenVerification = async (req, res, next) => {
@@ -116,10 +117,18 @@ async function run() {
 
     //All Car Listing API
     app.get("/car-listing", async (req, res) => {
-      const { userId } = req.params;
-      console.log("userId:", userId);
+      const { search, type } = req.query;
+      const query = {};
 
-      const result = await carsCollection.find().toArray();
+      if (search) {
+        query.carName = { $regex: search, $options: "i" };
+      }
+
+      if (type) {
+        query.carType = { $in: String(type).split(",") };
+      }
+
+      const result = await carsCollection.find(query).toArray();
 
       res.send(result);
     });
